@@ -1,0 +1,55 @@
+function depart_after(loop, after) {
+    return loop*((after-after%loop)/loop)+loop
+}
+
+BEGIN { RS="\n|," }
+
+{
+    if (NR == 1) from = int($0)
+    else bus[NR-1] = $0
+}
+
+END {
+    PROCINFO["sorted_in"] = "@val_num_asc"
+    for (b in bus) {
+        if (bus[b] == "x") continue
+        start[b] = depart_after(bus[b], from)
+        if (first == 0 || start[b] < start[first]) first = b
+        print bus[b] " => " start[b]
+    }
+
+    if (part == 1) {
+        print "Part 1"
+        id = bus[first]
+        time = start[first]
+        wait = time - from
+        printf "Earliest bus ID %d starts %d, you must wait %d min\n", id, time, wait
+        printf "Multiply = %d\n", id * wait
+    } else {
+        print "Part 2"
+        solved = 0
+        for (t=bus[1]; !solved; t+=bus[1]) {
+            if (debug) print ""
+            if (debug) print t" bus "bus[1]
+            solved = 1
+            for (b=2; b<=length(bus); b++) {
+                time_req=t+b-1
+                if (bus[b] == "x") {
+                    if (debug) print time_req" free slot"
+                    continue
+                }
+                dep = depart_after(bus[b], time_req-1)
+                if (debug) printf "%d bus %d\n", dep, bus[b]
+                if (dep != time_req) {
+                    solved = 0
+                    if (debug) print "NOPE"
+                    break # no luck, try next t
+                }
+            }
+            if (solved) solution = t
+            #if (t == 1068781) break
+        }
+        print ""
+        print "Time = " solution
+    }
+}
